@@ -110,22 +110,132 @@ main {
 
 .complexity-breakdown {
     margin-top: 1.5rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
 }
 
 .complexity-item {
     margin-bottom: 1rem;
 }
 
+.complexity-item:last-child {
+    margin-bottom: 0;
+}
+
 .complexity-item .label {
     display: block;
     margin-bottom: 0.5rem;
-    color: #666;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--background-color);
+    border-radius: 4px;
+    padding: 2px;
+    height: 24px;
 }
 
 .progress-bar {
-    height: 8px;
-    background: var(--primary-color);
-    border-radius: 4px;
+    height: 100%;
+    background: var(--success-color);
+    border-radius: 3px;
+    min-width: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-value {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    min-width: 3.5em;
+    text-align: right;
+}
+
+/* Color variations based on percentage ranges */
+.progress-bar[style*="width: 3"],
+.progress-bar[style*="width: 4"],
+.progress-bar[style*="width: 5"],
+.progress-bar[style*="width: 6"] {
+    background: var(--success-color);
+}
+
+.progress-bar[style*="width: 33"],
+.progress-bar[style*="width: 34"],
+.progress-bar[style*="width: 35"],
+.progress-bar[style*="width: 36"],
+.progress-bar[style*="width: 37"],
+.progress-bar[style*="width: 38"],
+.progress-bar[style*="width: 39"],
+.progress-bar[style*="width: 40"],
+.progress-bar[style*="width: 41"],
+.progress-bar[style*="width: 42"],
+.progress-bar[style*="width: 43"],
+.progress-bar[style*="width: 44"],
+.progress-bar[style*="width: 45"],
+.progress-bar[style*="width: 46"],
+.progress-bar[style*="width: 47"],
+.progress-bar[style*="width: 48"],
+.progress-bar[style*="width: 49"],
+.progress-bar[style*="width: 50"],
+.progress-bar[style*="width: 51"],
+.progress-bar[style*="width: 52"],
+.progress-bar[style*="width: 53"],
+.progress-bar[style*="width: 54"],
+.progress-bar[style*="width: 55"],
+.progress-bar[style*="width: 56"],
+.progress-bar[style*="width: 57"],
+.progress-bar[style*="width: 58"],
+.progress-bar[style*="width: 59"],
+.progress-bar[style*="width: 60"],
+.progress-bar[style*="width: 61"],
+.progress-bar[style*="width: 62"],
+.progress-bar[style*="width: 63"],
+.progress-bar[style*="width: 64"],
+.progress-bar[style*="width: 65"],
+.progress-bar[style*="width: 66"] {
+    background: var(--warning-color);
+}
+
+.progress-bar[style*="width: 67"],
+.progress-bar[style*="width: 68"],
+.progress-bar[style*="width: 69"],
+.progress-bar[style*="width: 70"],
+.progress-bar[style*="width: 71"],
+.progress-bar[style*="width: 72"],
+.progress-bar[style*="width: 73"],
+.progress-bar[style*="width: 74"],
+.progress-bar[style*="width: 75"],
+.progress-bar[style*="width: 76"],
+.progress-bar[style*="width: 77"],
+.progress-bar[style*="width: 78"],
+.progress-bar[style*="width: 79"],
+.progress-bar[style*="width: 80"],
+.progress-bar[style*="width: 81"],
+.progress-bar[style*="width: 82"],
+.progress-bar[style*="width: 83"],
+.progress-bar[style*="width: 84"],
+.progress-bar[style*="width: 85"],
+.progress-bar[style*="width: 86"],
+.progress-bar[style*="width: 87"],
+.progress-bar[style*="width: 88"],
+.progress-bar[style*="width: 89"],
+.progress-bar[style*="width: 90"],
+.progress-bar[style*="width: 91"],
+.progress-bar[style*="width: 92"],
+.progress-bar[style*="width: 93"],
+.progress-bar[style*="width: 94"],
+.progress-bar[style*="width: 95"],
+.progress-bar[style*="width: 96"],
+.progress-bar[style*="width: 97"],
+.progress-bar[style*="width: 98"],
+.progress-bar[style*="width: 99"],
+.progress-bar[style*="width: 100"] {
+    background: var(--error-color);
 }
 
 .code-block {

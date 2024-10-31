@@ -149,15 +149,24 @@
                     <h4>Complexity Analysis</h4>
                     <div class="complexity-item">
                         <span class="label">Template</span>
-                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.template }}%"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ details.complexity_breakdown.template }}%"></div>
+                            <span class="progress-value">{{ details.complexity_breakdown.template }}%</span>
+                        </div>
                     </div>
                     <div class="complexity-item">
                         <span class="label">Styles</span>
-                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.styles }}%"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ details.complexity_breakdown.styles }}%"></div>
+                            <span class="progress-value">{{ details.complexity_breakdown.styles }}%</span>
+                        </div>
                     </div>
                     <div class="complexity-item">
                         <span class="label">Logic</span>
-                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.logic }}%"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ details.complexity_breakdown.logic }}%"></div>
+                            <span class="progress-value">{{ details.complexity_breakdown.logic }}%</span>
+                        </div>
                     </div>
                 </div>
             </div>

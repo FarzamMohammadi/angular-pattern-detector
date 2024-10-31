@@ -6,8 +6,8 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         #relationship-graph {
-            width: 800px;
-            height: 600px;
+            width: 960px;
+            height: 720px;
             margin: 20px auto;
             border: 1px solid #eee;
             border-radius: 8px;
@@ -240,8 +240,8 @@
         console.log('Graph Data:', data);
         
         // Setup visualization
-        const width = 800;
-        const height = 600;
+        const width = 960;
+        const height = 720;
         
         const svg = d3.select('#relationship-graph')
             .append('svg')
@@ -252,10 +252,16 @@
         
         // Force simulation
         const simulation = d3.forceSimulation(data.nodes)
-            .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
-            .force('charge', d3.forceManyBody().strength(-500))
+            .force('link', d3.forceLink(data.links)
+                .id(d => d.id)
+                .distance(120))
+            .force('charge', d3.forceManyBody()
+                .strength(-300)
+                .distanceMax(250))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.value) * 4 + 8));
+            .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.value) * 3 + 15))
+            .force('x', d3.forceX(width / 2).strength(0.08))
+            .force('y', d3.forceY(height / 2).strength(0.08));
         
         // Create links
         const link = container.append('g')
@@ -271,7 +277,7 @@
             .selectAll('circle')
             .data(data.nodes)
             .join('circle')
-            .attr('r', d => Math.sqrt(d.value) * 4 + 6)
+            .attr('r', d => Math.sqrt(d.value) * 2 + 4)
             .attr('fill', d => d3.interpolateRdYlGn(1 - d.complexity))
             .attr('class', 'node')
             .attr('stroke', '#fff')
@@ -285,8 +291,10 @@
             .join('text')
             .text(d => d.id)
             .attr('class', 'node-label')
-            .attr('dx', 12)
-            .attr('dy', 4);
+            .attr('text-anchor', 'start')
+            .attr('dominant-baseline', 'middle')
+            .attr('dx', d => Math.sqrt(d.value) * 2 + 10)
+            .attr('dy', 0);
         
         // Update positions on each tick
         simulation.on('tick', () => {
