@@ -7,21 +7,6 @@ from src.core.extractor.component_extractor import ComponentExtractor
 from src.core.analyzer.pattern_analyzer import PatternAnalyzer
 from src.output.report_generator import ReportGenerator
 from src.output.catalog_generator import CatalogGenerator
-from src.output.documentation_generator import DocumentationGenerator
-from typing import List, Dict, Any
-import asyncio
-import re
-
-
-async def process_project(project_path: Path):
-    path_handler = PathHandler()
-    component_files = await path_handler.find_component_files_async(project_path)
-
-    # Process in batches
-    batch_size = 100
-    for i in range(0, len(component_files), batch_size):
-        batch = component_files[i : i + batch_size]
-        # Process batch
 
 
 def main():

@@ -1,12 +1,9 @@
-# Add to imports
 import shutil
 from pathlib import Path
 import json
 import jinja2
 from typing import Dict, Any, List
-from ..core.extractor.component_extractor import UIPattern
 import re
-import urllib.request
 
 
 class CatalogGenerator:

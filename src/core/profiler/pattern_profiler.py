@@ -1,11 +1,7 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from dataclasses import dataclass
 from datetime import datetime
 from ..extractor.component_extractor import UIPattern
-import json
-from pathlib import Path
-from collections import defaultdict
-from dataclasses import asdict
 import re
 
 

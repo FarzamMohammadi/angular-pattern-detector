@@ -1,13 +1,7 @@
-from typing import Dict, Any, List
+from typing import List
 from pathlib import Path
 import argparse
 from .path_handler import PathHandler
-from ..core.parser.angular_parser import AngularParser
-from ..core.extractor.component_extractor import ComponentExtractor
-from ..core.analyzer.pattern_analyzer import PatternAnalyzer
-from ..output.report_generator import ReportGenerator
-from ..output.catalog_generator import CatalogGenerator
-from ..output.documentation_generator import DocumentationGenerator
 from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
 
 
