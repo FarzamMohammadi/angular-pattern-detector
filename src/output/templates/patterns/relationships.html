@@ -3,8 +3,115 @@
 <head>
     <title>Pattern Relationships</title>
     <link rel="stylesheet" href="../assets/styles.css">
-    <!-- Use D3.js CDN directly -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #relationship-graph {
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .node-label {
+            font-size: 12px;
+            pointer-events: none;
+            fill: #333;
+        }
+        .node:hover {
+            cursor: pointer;
+        }
+        .pattern-details {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 250px;
+        }
+        .legend {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            background: white;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .low { background: #91cf60; }
+        .medium { background: #ffffbf; }
+        .high { background: #fc8d59; }
+        .pattern-preview {
+            position: absolute;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            min-width: 300px;
+            max-width: 400px;
+            z-index: 1000;
+        }
+        
+        .pattern-preview code {
+            font-size: 12px;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            display: block;
+            margin-top: 8px;
+        }
+        
+        .pattern-preview .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .pattern-preview .metric {
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .interactive-preview {
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .implementation-preview {
+            margin-top: 10px;
+        }
+        
+        .implementation-preview code {
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -13,116 +120,261 @@
             <a href="index.html">Back to Catalog</a>
         </nav>
     </header>
-    
-    <main>
-        <section class="visualization-info">
-            <h2>Pattern Relationships Visualization</h2>
-            <p>This graph shows how different UI patterns are related to each other:</p>
-            <ul>
-                <li>Node size indicates pattern usage frequency</li>
-                <li>Lines show relationships between patterns</li>
-                <li>Hover over nodes to see pattern names</li>
-                <li>Drag nodes to explore relationships</li>
-            </ul>
-        </section>
 
-        <div id="relationship-graph"></div>
+    <div id="relationship-graph"></div>
+    <div class="pattern-details" id="patternDetails">
+        <h3 id="patternName"></h3>
+        <p><strong>Usage:</strong> <span id="patternUsage"></span></p>
+        <p><strong>Complexity:</strong> <span id="patternComplexity"></span></p>
+        <p><strong>Related Patterns:</strong></p>
+        <p id="relatedPatterns"></p>
+    </div>
+    <div class="legend">
+        <h4>Complexity Levels</h4>
+        <div class="legend-item">
+            <div class="legend-color low"></div>
+            <span>Low Complexity</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color medium"></div>
+            <span>Medium Complexity</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color high"></div>
+            <span>High Complexity</span>
+        </div>
+        <p><small>Node size indicates usage frequency</small></p>
+    </div>
+    <div class="pattern-preview" id="patternPreview">
+        <h4 class="preview-name"></h4>
+        <div class="metrics">
+            <div class="metric">Usage: <span class="preview-usage"></span></div>
+            <div class="metric">Complexity: <span class="preview-complexity"></span></div>
+        </div>
         
-        <script>
-            // Debug output
-            console.log('Starting D3 visualization...');
-            
-            const data = {{ graph_data|tojson|safe }};
-            console.log('Graph Data:', data);
-            
-            if (!data.nodes || !data.nodes.length) {
-                document.getElementById('relationship-graph').innerHTML = 
-                    '<p class="error">No pattern relationships found. Check console for details.</p>';
-            } else {
-                const width = 800;
-                const height = 600;
-                
-                const svg = d3.select('#relationship-graph')
-                    .append('svg')
-                    .attr('width', width)
-                    .attr('height', height);
-                    
-                const simulation = d3.forceSimulation(data.nodes)
-                    .force('link', d3.forceLink(data.links).id(d => d.id))
-                    .force('charge', d3.forceManyBody().strength(-200))
-                    .force('center', d3.forceCenter(width / 2, height / 2));
-                    
-                const link = svg.append('g')
-                    .selectAll('line')
-                    .data(data.links)
-                    .join('line')
-                    .attr('stroke', '#999')
-                    .attr('stroke-opacity', 0.6)
-                    .attr('stroke-width', d => Math.sqrt(d.value));
-                    
-                const colorScale = d3.scaleLinear()
-                    .domain([0, 1])
-                    .range(['#69b3a2', '#ff7f7f']);
-                    
-                const node = svg.append('g')
-                    .selectAll('circle')
-                    .data(data.nodes)
-                    .join('circle')
-                    .attr('r', d => Math.sqrt(d.value) * 5)
-                    .attr('fill', d => colorScale(d.complexity))
-                    .call(drag(simulation));
-                    
-                // Add labels to nodes
-                const labels = svg.append('g')
-                    .selectAll('text')
-                    .data(data.nodes)
-                    .join('text')
-                    .text(d => d.id)
-                    .attr('font-size', '10px')
-                    .attr('dx', 12)
-                    .attr('dy', 4);
-                    
-                simulation.on('tick', () => {
-                    link
-                        .attr('x1', d => d.source.x)
-                        .attr('y1', d => d.source.y)
-                        .attr('x2', d => d.target.x)
-                        .attr('y2', d => d.target.y);
-                        
-                    node
-                        .attr('cx', d => d.x)
-                        .attr('cy', d => d.y);
-                        
-                    labels
-                        .attr('x', d => d.x)
-                        .attr('y', d => d.y);
-                });
+        <!-- Live Preview Section -->
+        <div class="preview-content">
+            <h4>Live Preview</h4>
+            <div class="interactive-preview"></div>
+        </div>
+        
+        <!-- Implementation Preview -->
+        <div class="implementation-preview">
+            <h4>Implementation</h4>
+            <div class="code-block">
+                <pre><code class="preview-implementation"></code></pre>
+            </div>
+        </div>
+    </div>
 
-                function drag(simulation) {
-                    function dragstarted(event) {
-                        if (!event.active) simulation.alphaTarget(0.3).restart();
-                        event.subject.fx = event.subject.x;
-                        event.subject.fy = event.subject.y;
-                    }
-                    
-                    function dragged(event) {
-                        event.subject.fx = event.x;
-                        event.subject.fy = event.y;
-                    }
-                    
-                    function dragended(event) {
-                        if (!event.active) simulation.alphaTarget(0);
-                        event.subject.fx = null;
-                        event.subject.fy = null;
-                    }
-                    
-                    return d3.drag()
-                        .on('start', dragstarted)
-                        .on('drag', dragged)
-                        .on('end', dragended);
-                }
+    <script>
+        // Debug output
+        console.log('Starting D3 visualization...');
+        
+        const data = {{ graph_data|tojson|safe }};
+        console.log('Graph Data:', data);
+        
+        // Setup visualization
+        const width = 800;
+        const height = 600;
+        
+        const svg = d3.select('#relationship-graph')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+        
+        const container = svg.append('g');
+        
+        // Force simulation
+        const simulation = d3.forceSimulation(data.nodes)
+            .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(30));
+        
+        // Create links
+        const link = container.append('g')
+            .selectAll('line')
+            .data(data.links)
+            .join('line')
+            .attr('stroke', '#999')
+            .attr('stroke-opacity', 0.6);
+        
+        // Create nodes
+        const node = container.append('g')
+            .selectAll('circle')
+            .data(data.nodes)
+            .join('circle')
+            .attr('r', 10)
+            .attr('fill', d => d3.interpolateRdYlGn(1 - d.complexity))
+            .attr('class', 'node')
+            .call(drag(simulation));
+        
+        // Add labels
+        const labels = container.append('g')
+            .selectAll('text')
+            .data(data.nodes)
+            .join('text')
+            .text(d => d.id)
+            .attr('class', 'node-label')
+            .attr('dx', 12)
+            .attr('dy', 4);
+        
+        // Update positions on each tick
+        simulation.on('tick', () => {
+            link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+                
+            node
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y);
+                
+            labels
+                .attr('x', d => d.x)
+                .attr('y', d => d.y);
+        });
+
+        function showPatternDetails(event, d) {
+            const details = document.getElementById('patternDetails');
+            document.getElementById('patternName').textContent = d.id;
+            document.getElementById('patternUsage').textContent = d.value;
+            document.getElementById('patternComplexity').textContent = 
+                (d.complexity * 100).toFixed(0) + '%';
+            document.getElementById('relatedPatterns').textContent = 
+                data.links
+                    .filter(l => l.source.id === d.id || l.target.id === d.id)
+                    .map(l => l.source.id === d.id ? l.target.id : l.source.id)
+                    .join(', ');
+            details.style.display = 'block';
+        }
+
+        function highlightRelated(event, d) {
+            node.style('opacity', n => 
+                n === d || data.links.some(l => 
+                    (l.source === d && l.target === n) || 
+                    (l.target === d && l.source === n)
+                ) ? 1 : 0.1
+            );
+            link.style('opacity', l => 
+                l.source === d || l.target === d ? 1 : 0.1
+            );
+            labels.style('opacity', n => 
+                n === d || data.links.some(l => 
+                    (l.source === d && l.target === n) || 
+                    (l.target === d && l.source === n)
+                ) ? 1 : 0.1
+            );
+        }
+
+        function resetHighlight() {
+            node.style('opacity', 1);
+            link.style('opacity', 0.6);
+            labels.style('opacity', 1);
+        }
+
+        function drag(simulation) {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
             }
-        </script>
-    </main>
+            
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+            
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        // Add hover interactions
+        node
+            .on('mouseover', (event, d) => {
+                const preview = document.getElementById('patternPreview');
+                const previewContent = preview.querySelector('.interactive-preview');
+                const implementationCode = preview.querySelector('.preview-implementation');
+                
+                // Update basic info
+                preview.querySelector('.preview-name').textContent = d.id;
+                preview.querySelector('.preview-usage').textContent = d.value;
+                preview.querySelector('.preview-complexity').textContent = 
+                    (d.complexity * 100).toFixed(0) + '%';
+                
+                // Add live preview based on pattern type
+                previewContent.innerHTML = '';  // Clear previous content
+                
+                let implementation = '';
+                
+                if (d.id.toLowerCase().includes('form-group')) {
+                    previewContent.innerHTML = `
+                        <form onsubmit="event.preventDefault(); alert('Form submitted!');">
+                            <input type="text" placeholder="Sample input">
+                            <button type="submit">Submit</button>
+                        </form>`;
+                    implementation = '<form [formGroup]="sampleForm">\n  <input formControlName="field">\n  <button type="submit">Submit</button>\n</form>';
+                } else if (d.id.toLowerCase().includes('action-button')) {
+                    previewContent.innerHTML = `
+                        <button onclick="alert('Button clicked!')">Sample Button</button>`;
+                    implementation = '<button (click)="handleAction()">Action</button>';
+                } else if (d.id.toLowerCase().includes('data-list')) {
+                    previewContent.innerHTML = `
+                        <ul>
+                            <li>Sample Item 1</li>
+                            <li>Sample Item 2</li>
+                            <li>Sample Item 3</li>
+                        </ul>`;
+                    implementation = '<ul>\n  <li *ngFor="let item of items">{{ item }}</li>\n</ul>';
+                } else if (d.id.toLowerCase().includes('input-field')) {
+                    previewContent.innerHTML = `
+                        <input type="text" placeholder="Sample Input Field">`;
+                    implementation = '<input [(ngModel)]="fieldValue" placeholder="Enter value">';
+                } else if (d.id.toLowerCase().includes('data-binding')) {
+                    previewContent.innerHTML = `
+                        <div>Sample: {{ "Bound Value" }}</div>`;
+                    implementation = '<div>{{ boundValue }}</div>';
+                } else if (d.id.toLowerCase().includes('conditional-content')) {
+                    previewContent.innerHTML = `
+                        <div>Conditional Content (Toggle)</div>
+                        <button onclick="this.nextElementSibling.classList.toggle('hidden')">Toggle Content</button>
+                        <div>This content can be toggled</div>`;
+                    implementation = '<div *ngIf="showContent">\n  Conditional Content\n</div>';
+                }
+                
+                // Update implementation code
+                implementationCode.textContent = implementation;
+                
+                // Position preview near mouse but with more space for the larger preview
+                preview.style.left = (event.pageX + 20) + 'px';
+                preview.style.top = Math.max(event.pageY - 200, 20) + 'px';
+                preview.style.opacity = '1';
+                
+                highlightRelated(event, d);
+            })
+            .on('mouseout', (event, d) => {
+                document.getElementById('patternPreview').style.opacity = '0';
+                resetHighlight();
+            });
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 5])
+            .on('zoom', (event) => {
+                container.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+    </script>
 </body>
 </html>

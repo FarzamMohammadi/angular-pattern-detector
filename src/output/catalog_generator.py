@@ -236,8 +236,8 @@ class CatalogGenerator:
             {'date': '2023-04', 'count': 15},
         ]
 
-    def _generate_relationship_graph(self, relationships: Dict[str, Dict[str, float]]):
-        """Generates the relationship visualization page"""
+    def _generate_relationship_graph(self, relationships: Dict[str, List[Dict[str, Any]]]):
+        """Generates the relationship visualization page with enhanced metadata"""
         template = self.template_env.get_template('patterns/relationships.html')
 
         # Convert relationships data to D3.js format
@@ -249,24 +249,34 @@ class CatalogGenerator:
         # Process relationships into nodes and links
         for source, targets in relationships.items():
             if source not in added_nodes:
-                graph_data['nodes'].append({'id': source})
+                source_data = self.patterns.get(source, {})
+                graph_data['nodes'].append(
+                    {
+                        'id': source,
+                        'complexity': source_data.get('complexity', 0),
+                        'value': max(source_data.get('total_usage', 1), 1),  # Ensure minimum value of 1
+                        'type': source_data.get('pattern_type', 'unknown'),
+                    }
+                )
                 added_nodes.add(source)
 
-            # Handle both dict and list formats for targets
-            if isinstance(targets, dict):
-                target_items = targets.items()
-            else:
-                # If targets is a list, convert to appropriate format
-                target_items = [(target, 1) for target in targets]
+            for target in targets:
+                target_name = target['name']
+                if target_name not in added_nodes:
+                    target_data = self.patterns.get(target_name, {})
+                    graph_data['nodes'].append(
+                        {
+                            'id': target_name,
+                            'complexity': target_data.get('complexity', 0),
+                            'value': max(target_data.get('total_usage', 1), 1),
+                            'type': target_data.get('pattern_type', 'unknown'),
+                        }
+                    )
+                    added_nodes.add(target_name)
 
-            for target, strength in target_items:
-                if target not in added_nodes:
-                    graph_data['nodes'].append({'id': target})
-                    added_nodes.add(target)
+                graph_data['links'].append({'source': source, 'target': target_name, 'value': target['similarity']})
 
-                graph_data['links'].append({'source': source, 'target': target, 'value': strength})
-
-        # Generate relationships.html
+        # Generate relationships.html with the graph data
         relationship_content = template.render(graph_data=graph_data)
         (self.output_dir / 'patterns' / 'relationships.html').write_text(relationship_content)
 
@@ -374,18 +384,30 @@ class CatalogGenerator:
         except Exception as e:
             print(f"Error generating page for pattern {pattern_name}: {str(e)}")
 
-    def _generate_relationship_data(self) -> Dict[str, List[str]]:
-        """Generate relationships between patterns based on complexity similarity"""
+    def _generate_relationship_data(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Generate relationships between patterns with enhanced metadata"""
         relationships = {}
 
         for pattern_name, pattern_data in self.patterns.items():
             relationships[pattern_name] = []
             pattern_complexity = pattern_data.get('complexity', 0)
+            pattern_usage = pattern_data.get('total_usage', 0)
 
             for other_name, other_data in self.patterns.items():
                 if pattern_name != other_name:
                     other_complexity = other_data.get('complexity', 0)
-                    if abs(pattern_complexity - other_complexity) < 0.2:
-                        relationships[pattern_name].append(other_name)
+                    other_usage = other_data.get('total_usage', 0)
+
+                    # Calculate relationship strength based on complexity similarity
+                    similarity = 1 - abs(pattern_complexity - other_complexity)
+                    if similarity > 0.7:  # Only connect fairly similar patterns
+                        relationships[pattern_name].append(
+                            {
+                                'name': other_name,
+                                'complexity': other_complexity,
+                                'usage': other_usage,
+                                'similarity': similarity,
+                            }
+                        )
 
         return relationships
