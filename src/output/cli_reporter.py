@@ -3,6 +3,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
+
 class CLIReporter:
     def __init__(self):
         self.console = Console()
@@ -24,7 +25,7 @@ class CLIReporter:
             f"Total Patterns: {summary['total_patterns_detected']}\n"
             f"Unique Pattern Types: {summary['unique_pattern_types']}\n",
             title="Summary",
-            border_style="blue"
+            border_style="blue",
         )
         self.console.print(panel)
 
@@ -35,17 +36,13 @@ class CLIReporter:
         table.add_column("Component Coverage", justify="right")
 
         for pattern in summary['most_common_patterns']:
-            table.add_row(
-                pattern['name'],
-                str(pattern['frequency']),
-                str(pattern['components'])
-            )
+            table.add_row(pattern['name'], str(pattern['frequency']), str(pattern['components']))
 
         self.console.print(table)
 
     def _print_pattern_details(self, patterns: Dict[str, Any]):
         self.console.print("\n[bold]Pattern Details[/bold]")
-        
+
         for name, details in patterns.items():
             panel = Panel.fit(
                 f"Usage: {details['total_usage']}\n"
@@ -53,7 +50,7 @@ class CLIReporter:
                 f"Complexity Score: {details['complexity_score']:.2f}\n"
                 f"Variations: {len(details['variations'])}",
                 title=name,
-                border_style="cyan"
+                border_style="cyan",
             )
             self.console.print(panel)
 

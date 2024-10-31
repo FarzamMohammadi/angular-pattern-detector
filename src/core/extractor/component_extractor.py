@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 import re
 from dataclasses import dataclass
 
+
 @dataclass
 class UIPattern:
     name: str
@@ -9,6 +10,7 @@ class UIPattern:
     variations: List[str]
     components: List[str]
     template_structure: str
+
 
 class ComponentExtractor:
     def __init__(self):
@@ -18,7 +20,7 @@ class ComponentExtractor:
             'conditional': r'\*ngIf\s*=\s*"[^"]*"',
             'form': r'<form[^>]*>.*?</form>',
             'input': r'<input[^>]*>',
-            'button': r'<button[^>]*>.*?</button>'
+            'button': r'<button[^>]*>.*?</button>',
         }
 
     def extract_patterns(self, component_data: Dict[str, Any]) -> List[UIPattern]:
@@ -27,7 +29,7 @@ class ComponentExtractor:
         """
         patterns = []
         template = component_data.get('template', '')
-        
+
         if not template:
             return patterns
 
@@ -35,14 +37,14 @@ class ComponentExtractor:
         for pattern_name, pattern_regex in self.structural_patterns.items():
             matches = re.finditer(pattern_regex, template, re.DOTALL)
             variations = [match.group(0) for match in matches]
-            
+
             if variations:
                 pattern = UIPattern(
                     name=pattern_name,
                     frequency=len(variations),
                     variations=variations,
                     components=[component_data.get('class_name', 'Unknown')],
-                    template_structure=self._extract_template_structure(variations[0])
+                    template_structure=self._extract_template_structure(variations[0]),
                 )
                 patterns.append(pattern)
 
@@ -67,10 +69,10 @@ class ComponentExtractor:
         Extracts patterns related to component composition
         """
         patterns = []
-        
+
         # Find custom components (elements with dash in name)
         custom_components = re.finditer(r'<([a-z]+-[a-z-]+)[^>]*>', template)
-        
+
         component_usage = {}
         for match in custom_components:
             component_name = match.group(1)
@@ -82,7 +84,7 @@ class ComponentExtractor:
                 frequency=frequency,
                 variations=[],
                 components=[component_name],
-                template_structure=f"<{component_name}></{component_name}>"
+                template_structure=f"<{component_name}></{component_name}>",
             )
             patterns.append(pattern)
 
@@ -93,13 +95,13 @@ class ComponentExtractor:
         Analyzes relationships between different patterns
         """
         relationships = {}
-        
+
         for pattern in patterns:
             related_patterns = []
             for other_pattern in patterns:
                 if pattern != other_pattern and self._are_patterns_related(pattern, other_pattern):
                     related_patterns.append(other_pattern.name)
-            
+
             if related_patterns:
                 relationships[pattern.name] = related_patterns
 
@@ -115,5 +117,7 @@ class ComponentExtractor:
             return True
 
         # Check if one pattern's structure contains the other
-        return pattern1.template_structure in pattern2.template_structure or \
-               pattern2.template_structure in pattern1.template_structure
+        return (
+            pattern1.template_structure in pattern2.template_structure
+            or pattern2.template_structure in pattern1.template_structure
+        )

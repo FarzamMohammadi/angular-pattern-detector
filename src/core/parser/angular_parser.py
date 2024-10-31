@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Any
 import re
 
+
 class AngularParser:
     def __init__(self):
         self.component_metadata_pattern = re.compile(r'@Component\s*\(\s*{([^}]+)}\s*\)')
@@ -11,14 +12,7 @@ class AngularParser:
         """
         Parses an Angular component and its related files
         """
-        result = {
-            'metadata': {},
-            'template': '',
-            'styles': [],
-            'class_name': '',
-            'properties': [],
-            'methods': []
-        }
+        result = {'metadata': {}, 'template': '', 'styles': [], 'class_name': '', 'properties': [], 'methods': []}
 
         # Parse TypeScript file
         if component_files['typescript']:
@@ -39,12 +33,7 @@ class AngularParser:
         """
         Parses TypeScript content to extract component information
         """
-        result = {
-            'metadata': {},
-            'class_name': '',
-            'properties': [],
-            'methods': []
-        }
+        result = {'metadata': {}, 'class_name': '', 'properties': [], 'methods': []}
 
         # Extract component metadata
         metadata_match = self.component_metadata_pattern.search(content)
