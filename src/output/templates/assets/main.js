@@ -7,22 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Code snippet copy functionality
-    const codeBlocks = document.querySelectorAll('pre code');
-    codeBlocks.forEach(block => {
-        const copyButton = document.createElement('button');
-        copyButton.textContent = 'Copy';
-        copyButton.className = 'copy-button';
-        copyButton.addEventListener('click', () => {
-            navigator.clipboard.writeText(block.textContent);
-            copyButton.textContent = 'Copied!';
-            setTimeout(() => {
-                copyButton.textContent = 'Copy';
-            }, 2000);
-        });
-        block.parentNode.insertBefore(copyButton, block);
-    });
-
     // Interactive form handling
     const forms = document.querySelectorAll('.pattern-form form');
     forms.forEach(form => {
@@ -75,4 +59,22 @@ function initializePatternComparison() {
                 comparisonModal.classList.add('active');
             });
     }
+}
+
+function toggleMetrics(button) {
+    const section = button.closest('.metrics-explanation');
+    section.classList.toggle('collapsed');
+    button.querySelector('.icon').textContent = section.classList.contains('collapsed') ? '+' : '-';
+}
+
+function copyCode(button) {
+    const implementationPreview = button.closest('.implementation-preview');
+    const codeBlock = implementationPreview.querySelector('pre code');
+    navigator.clipboard.writeText(codeBlock.textContent);
+    
+    const copyText = button.querySelector('.copy-text');
+    copyText.textContent = 'Copied!';
+    setTimeout(() => {
+        copyText.textContent = 'Copy';
+    }, 2000);
 }
