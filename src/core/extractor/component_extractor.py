@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 import re
 from dataclasses import dataclass
+from bs4 import BeautifulSoup
 
 
 @dataclass
@@ -10,6 +11,10 @@ class UIPattern:
     variations: List[str]
     components: List[str]
     template_structure: str
+    html_structure: str = ''
+    associated_styles: Dict[str, str] = field(default_factory=dict)
+    isolated_template: str = ''
+    selector_path: str = ''
 
 
 class ComponentExtractor:
@@ -29,30 +34,63 @@ class ComponentExtractor:
         """
         patterns = []
         template = component_data.get('template', '')
+        styles = component_data.get('styles', [])
 
         if not template:
             return patterns
 
-        # Extract structural patterns
+        # Extract structural patterns with visual context
         for pattern_name, pattern_regex in self.structural_patterns.items():
             matches = re.finditer(pattern_regex, template, re.DOTALL)
-            variations = [match.group(0) for match in matches]
+            for match in matches:
+                pattern_html = match.group(0)
+                isolated_template = self._isolate_template(pattern_html)
+                selector_path = self._extract_selector_path(pattern_html)
+                associated_styles = self._extract_associated_styles(selector_path, styles)
 
-            if variations:
                 pattern = UIPattern(
                     name=pattern_name,
-                    frequency=len(variations),
-                    variations=variations,
+                    frequency=1,
+                    variations=[pattern_html],
                     components=[component_data.get('class_name', 'Unknown')],
-                    template_structure=self._extract_template_structure(variations[0]),
+                    template_structure=self._extract_template_structure(pattern_html),
+                    html_structure=pattern_html,
+                    associated_styles=associated_styles,
+                    isolated_template=isolated_template,
+                    selector_path=selector_path,
                 )
                 patterns.append(pattern)
 
-        # Extract component composition patterns
-        composition_patterns = self._extract_composition_patterns(template)
-        patterns.extend(composition_patterns)
-
         return patterns
+
+    def _isolate_template(self, html: str) -> str:
+        """Isolates a pattern template by removing external dependencies"""
+        # Remove component-specific bindings
+        isolated = re.sub(r'\[(\w+)\]="[^"]*"', r'\1=""', html)
+        # Replace complex bindings with placeholders
+        isolated = re.sub(r'\{\{[^}]+\}\}', '{{placeholder}}', isolated)
+        return isolated
+
+    def _extract_selector_path(self, html: str) -> str:
+        """Extracts CSS selector path for the pattern"""
+        soup = BeautifulSoup(html, 'html.parser')
+        selectors = []
+        for element in soup.find_all():
+            classes = element.get('class', [])
+            if classes:
+                selectors.append(f".{'.'.join(classes)}")
+        return ' '.join(selectors)
+
+    def _extract_associated_styles(self, selector_path: str, styles: List[str]) -> Dict[str, str]:
+        """Extracts styles associated with the pattern"""
+        associated_styles = {}
+        for style in styles:
+            # Basic CSS parsing - could be enhanced with a proper CSS parser
+            for selector in selector_path.split():
+                css_rules = re.findall(rf'{selector}\s*\{{([^}}]+)\}}', style)
+                for rules in css_rules:
+                    associated_styles[selector] = rules.strip()
+        return associated_styles
 
     def _extract_template_structure(self, template_fragment: str) -> str:
         """
