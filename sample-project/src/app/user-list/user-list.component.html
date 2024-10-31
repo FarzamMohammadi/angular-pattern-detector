@@ -1,0 +1,26 @@
+<div class="user-list-container">
+    <h2>User Management</h2>
+    
+    <div class="controls">
+      <button (click)="toggleAdmins()">
+        {{ showAdmins ? 'Show All' : 'Show Admins Only' }}
+      </button>
+    </div>
+  
+    <form class="search-form">
+      <input type="text" placeholder="Search users...">
+      <button type="submit">Search</button>
+    </form>
+  
+    <div class="users-grid">
+      <div class="user-card" *ngFor="let user of users">
+        <div class="user-header">
+          <h3>{{user.name}}</h3>
+        </div>
+        <div class="user-body" *ngIf="!showAdmins || user.role === 'Admin'">
+          <p>Role: {{user.role}}</p>
+          <button class="edit-btn">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,28 @@
+.user-list-container {
+    padding: 20px;
+  }
+  
+  .controls {
+    margin-bottom: 20px;
+  }
+  
+  .search-form {
+    margin-bottom: 20px;
+    
+    input {
+      padding: 8px;
+      margin-right: 10px;
+    }
+  }
+  
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .user-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 4px;
+  }
