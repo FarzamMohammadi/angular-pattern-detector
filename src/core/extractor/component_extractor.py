@@ -2,6 +2,8 @@ from typing import Dict, Any, List
 import re
 from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
+from functools import lru_cache
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -43,43 +45,57 @@ class ComponentExtractor:
             'data-binding': r'\{\{[^}]+\}\}',
             'event-binding': r'\([^)]+\)="[^"]+"',
         }
+        # Precompile regular expressions
+        self.compiled_patterns = {
+            name: re.compile(pattern, re.DOTALL) for name, pattern in self.structural_patterns.items()
+        }
 
     def extract_patterns(self, component_data: Dict[str, Any]) -> List[UIPattern]:
-        """Extracts UI patterns from a parsed component"""
+        """Extracts UI patterns from a parsed component using chunking"""
         patterns = []
         template = component_data.get('template', '')
-        styles = component_data.get('styles', [])
+        class_name = component_data.get('class_name', 'Unknown')
 
         if not template:
             return patterns
 
-        print(f"Analyzing template:\n{template[:200]}...")  # Debug print
+        # Process template in chunks
+        chunk_size = 5000
+        chunks = [template[i : i + chunk_size] for i in range(0, len(template), chunk_size)]
 
-        # Extract structural patterns with visual context
-        for pattern_name, pattern_regex in self.structural_patterns.items():
-            matches = re.finditer(pattern_regex, template, re.DOTALL)
+        for chunk in chunks:
+            chunk_patterns = self._extract_chunk_patterns(chunk, class_name)
+            patterns.extend(chunk_patterns)
+
+        # Process styles in bulk after pattern detection
+        if patterns:
+            styles = component_data.get('styles', [])
+            self._bulk_process_styles(patterns, styles)
+
+        return patterns
+
+    @lru_cache(maxsize=500)
+    def _extract_chunk_patterns(self, template_chunk: str, component_class_name: str = "Unknown") -> List[UIPattern]:
+        """Cached pattern extraction for template chunks"""
+        patterns = []
+        for pattern_name, compiled_regex in self.compiled_patterns.items():
+            matches = compiled_regex.finditer(template_chunk)
             for match in matches:
                 pattern_html = match.group(0)
-                print(f"Found pattern {pattern_name}: {pattern_html[:100]}...")  # Debug print
 
-                isolated_template = self._isolate_template(pattern_html)
-                selector_path = self._extract_selector_path(pattern_html)
-                associated_styles = self._extract_associated_styles(selector_path, styles)
-
+                # Create pattern with minimal processing
                 pattern = UIPattern(
                     name=pattern_name,
                     frequency=1,
                     variations=tuple([pattern_html]),
-                    components=tuple([component_data.get('class_name', 'Unknown')]),
-                    template_structure=self._extract_template_structure(pattern_html),
+                    components=tuple([component_class_name]),
+                    template_structure=pattern_html,  # Defer complex processing
                     html_structure=pattern_html,
-                    associated_styles=associated_styles,
-                    isolated_template=isolated_template,
-                    selector_path=selector_path,
+                    associated_styles={},
+                    isolated_template='',  # Defer template isolation
+                    selector_path='',  # Defer selector extraction
                 )
                 patterns.append(pattern)
-
-        print(f"Found {len(patterns)} patterns in component")  # Debug print
         return patterns
 
     def _isolate_template(self, html: str) -> str:
@@ -178,3 +194,95 @@ class ComponentExtractor:
             pattern1.template_structure in pattern2.template_structure
             or pattern2.template_structure in pattern1.template_structure
         )
+
+    def validate_project_path(self, path: Path) -> bool:
+        """Validates if the given path contains Angular components."""
+        if not path.exists():
+            return False
+
+        # For sample projects, just check if we have component files
+        component_files = list(path.rglob("*.component.ts"))
+        return len(component_files) > 0
+
+    def find_component_files(self, base_path: Path) -> List[Path]:
+        """Finds all Angular component files"""
+        # First, get all TypeScript files
+        all_ts_files = list(base_path.rglob("*.component.ts"))
+        if not all_ts_files:
+            print(f"No .component.ts files found in {base_path}")
+            return []
+
+        print(f"Found {len(all_ts_files)} potential component files")
+
+        component_files = []
+        for file_path in all_ts_files:
+            if self._is_valid_component(file_path):
+                component_files.append(file_path)
+                print(f"Valid component found: {file_path}")
+
+        if not component_files:
+            print("No valid Angular components found after validation")
+        else:
+            print(f"Found {len(component_files)} valid Angular components")
+
+        return component_files
+
+    def _is_valid_component(self, file_path: Path) -> bool:
+        """Validates if a file is an Angular component file"""
+        try:
+            # Read the file content directly for small files
+            content = file_path.read_text()
+
+            # Debug output
+            print(f"Validating component: {file_path}")
+            has_component = '@Component' in content
+            print(f"Has @Component decorator: {has_component}")
+
+            return has_component
+
+        except Exception as e:
+            print(f"Error validating component {file_path}: {str(e)}")
+            return False
+
+    def get_related_files(self, component_file: Path) -> Dict[str, Path]:
+        """Gets related template, style, and spec files for a component."""
+        base_name = component_file.stem.replace('.component', '')
+        parent_dir = component_file.parent
+
+        related_files = {'typescript': component_file, 'template': None, 'styles': [], 'spec': None}
+
+        # Find template file
+        template = parent_dir / f"{base_name}.component.html"
+        if template.exists():
+            related_files['template'] = template
+
+        # Find style files
+        for ext in ['.scss', '.css']:
+            style = parent_dir / f"{base_name}.component{ext}"
+            if style.exists():
+                related_files['styles'].append(style)
+
+        # Find spec file
+        spec = parent_dir / f"{base_name}.component.spec.ts"
+        if spec.exists():
+            related_files['spec'] = spec
+
+        return related_files
+
+    def _bulk_process_styles(self, patterns: List[UIPattern], styles: List[str]):
+        """Process styles for all patterns at once"""
+        if not styles:
+            return
+
+        # Create a mapping of selector paths to patterns
+        selector_map = {}
+        for pattern in patterns:
+            if pattern.selector_path:
+                selector_map[pattern.selector_path] = pattern
+
+        # Process all styles at once
+        for style in styles:
+            for selector, pattern in selector_map.items():
+                css_rules = re.findall(rf'{selector}\s*\{{([^}}]+)\}}', style)
+                for rules in css_rules:
+                    pattern.associated_styles[selector] = rules.strip()

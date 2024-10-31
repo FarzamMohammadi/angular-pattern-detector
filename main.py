@@ -8,15 +8,20 @@ from src.core.analyzer.pattern_analyzer import PatternAnalyzer
 from src.output.report_generator import ReportGenerator
 from src.output.catalog_generator import CatalogGenerator
 from src.output.documentation_generator import DocumentationGenerator
-from typing import List
+from typing import List, Dict, Any
+import asyncio
+import re
 
 
-def process_in_batches(component_files: List[Path], batch_size: int = 100):
-    """Process components in batches to manage memory"""
+async def process_project(project_path: Path):
+    path_handler = PathHandler()
+    component_files = await path_handler.find_component_files_async(project_path)
+
+    # Process in batches
+    batch_size = 100
     for i in range(0, len(component_files), batch_size):
         batch = component_files[i : i + batch_size]
         # Process batch
-        yield batch
 
 
 def main():
@@ -54,21 +59,21 @@ def main():
         # Initialize patterns list
         patterns = []
 
-        # Debug: Print component content
-        for component_file in component_files:
-            print(f"\nAnalyzing component: {component_file}")
-            related_files = path_handler.get_related_files(component_file)
-            component_data = parser.parse_component(related_files)
+        # Process components in batches
+        batch_size = 50
+        for i in range(0, len(component_files), batch_size):
+            batch = component_files[i : i + batch_size]
+            batch_patterns = []
 
-            # Print template content
-            if related_files['template']:
-                print(f"Template content preview:")
-                template_content = related_files['template'].read_text()
-                print(template_content[:200] + "...")
+            for component_file in batch:
+                related_files = path_handler.get_related_files(component_file)
+                component_data = parser.parse_component(related_files)
+                if related_files['template']:
+                    component_patterns = extractor.extract_patterns(component_data)
+                    batch_patterns.extend(component_patterns)
 
-            component_patterns = extractor.extract_patterns(component_data)
-            patterns.extend(component_patterns)
-            print(f"Found {len(component_patterns)} patterns in this component")
+            patterns.extend(batch_patterns)
+            print(f"Processed batch {i//batch_size + 1}, found {len(batch_patterns)} patterns")
 
         cli.display_progress("Analyzing patterns...")
         analysis_results = analyzer.analyze_patterns(patterns)
@@ -80,9 +85,11 @@ def main():
         print(f"Pattern types found: {list(analysis_results['patterns'].keys())}")
 
         # Generate catalog
-        cli.display_progress("Generating pattern catalog...")
-        catalog_generator = CatalogGenerator(Path("output/pattern-catalog"))
-        catalog_generator.generate_catalog(analysis_results)
+        if args.generate_catalog:
+            cli.display_progress("Generating pattern catalog...")
+            output_dir = Path('./pattern-catalog')
+            catalog_generator = CatalogGenerator(output_dir=output_dir)
+            catalog_generator.generate_catalog(analysis_results=analysis_results)
 
         # Verify the output
         output_dir = Path("output/pattern-catalog")

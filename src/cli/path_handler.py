@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import mmap
 import multiprocessing
 import re
+import aiofiles
+import asyncio
 
 
 class PathHandler:
@@ -93,3 +95,15 @@ class PathHandler:
             print(f"{ext}: {len(files)} files")
             for f in files[:5]:  # Show first 5 files of each type
                 print(f"  - {f}")
+
+    async def get_related_files_async(self, component_file: Path) -> Dict[str, Path]:
+        """Asynchronous file operations"""
+        related_files = {'typescript': None, 'template': None, 'styles': [], 'spec': None}
+
+        tasks = []
+        for ext in ['.ts', '.html', '.scss', '.css']:
+            tasks.append(self._check_file_exists_async(component_file, ext))
+
+        results = await asyncio.gather(*tasks)
+        # Process results...
+        return related_files

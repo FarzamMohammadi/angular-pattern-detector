@@ -56,12 +56,51 @@
                     </div>
                 </div>
 
-                <!-- Pattern Preview -->
+                <!-- Interactive Preview -->
                 <div class="pattern-preview">
                     <div class="preview-header">
-                        <h4>Implementation Preview</h4>
+                        <h4>Live Preview</h4>
                     </div>
                     <div class="preview-content">
+                        {% if 'form-group' in name.lower() %}
+                        <div class="pattern-form interactive-preview">
+                            <form onsubmit="event.preventDefault(); alert('Form submitted!');">
+                                <input type="text" placeholder="Sample input">
+                                <button type="submit">Submit</button>
+                            </form>
+                        </div>
+                        {% elif 'action-button' in name.lower() %}
+                        <div class="pattern-button interactive-preview">
+                            <button onclick="alert('Button clicked!')">Sample Button</button>
+                        </div>
+                        {% elif 'data-list' in name.lower() %}
+                        <div class="pattern-list interactive-preview">
+                            <ul>
+                                <li>Sample Item 1</li>
+                                <li>Sample Item 2</li>
+                                <li>Sample Item 3</li>
+                            </ul>
+                        </div>
+                        {% elif 'input-field' in name.lower() %}
+                        <div class="pattern-input interactive-preview">
+                            <input type="text" placeholder="Sample Input Field">
+                        </div>
+                        {% elif 'data-binding' in name.lower() %}
+                        <div class="pattern-binding interactive-preview">
+                            <div>{{ "{{ Sample Data Binding }}" }}</div>
+                        </div>
+                        {% elif 'conditional-content' in name.lower() %}
+                        <div class="pattern-conditional interactive-preview">
+                            <div>Conditional Content (Toggle)</div>
+                            <button onclick="this.nextElementSibling.classList.toggle('hidden')">Toggle Content</button>
+                            <div>This content can be toggled</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Implementation Code -->
+                    <div class="implementation-preview">
+                        <h4>Implementation</h4>
                         <div class="code-block">
                             <pre><code>{{ details.template_structure }}</code></pre>
                         </div>
@@ -89,4 +128,4 @@
         </section>
     </main>
 </body>
-</html> 
+</html>

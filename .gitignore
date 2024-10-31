@@ -53,4 +53,4 @@ htmlcov/
 Thumbs.db
 
 # Pattern catalog output
-output/pattern-catalog/
+pattern-catalog/

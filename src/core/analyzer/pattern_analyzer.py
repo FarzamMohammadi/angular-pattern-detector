@@ -10,7 +10,7 @@ from functools import lru_cache
 
 class PatternAnalyzer:
     def __init__(self):
-        self.pattern_registry = defaultdict(list)
+        self.pattern_registry = {}
         self.similarity_threshold = 0.7  # Configurable similarity threshold
         self.pattern_profiler = PatternProfiler()  # Add profiler
         # Use number of CPU cores for optimal parallelization
@@ -51,64 +51,67 @@ class PatternAnalyzer:
         return struct_similarity * 0.7 + style_similarity * 0.3
 
     def analyze_patterns(self, patterns: List[UIPattern]) -> Dict[str, Any]:
-        """Analyzes patterns using parallel processing"""
-        try:
-            print("\nStarting pattern analysis...")
-            print(f"Input patterns count: {len(patterns)}")
+        """Analyzes patterns using parallel processing and batching"""
+        print("\nStarting pattern analysis...")
+        print(f"Input patterns count: {len(patterns)}")
 
-            # Register patterns
-            self._register_patterns(patterns)
+        # Group patterns by type for efficient processing
+        pattern_groups = {}
+        for pattern in patterns:
+            if pattern.name not in pattern_groups:
+                pattern_groups[pattern.name] = []
+            pattern_groups[pattern.name].append(pattern)
 
-            print(f"Registered pattern types: {list(self.pattern_registry.keys())}")
+        print(f"Registered {len(pattern_groups)} pattern types")
+        print(f"Registered pattern types: {list(pattern_groups.keys())}")
 
-            # Create a copy of the registry keys to avoid modification during iteration
-            pattern_names = list(self.pattern_registry.keys())
-
-            # Process each pattern type
-            pattern_analysis = {}
-            for pattern_name in pattern_names:
-                print(f"\nAnalyzing pattern type: {pattern_name}")
-                pattern_list = self.pattern_registry[pattern_name]
-                print(f"Pattern instances: {len(pattern_list)}")
-
-                try:
-                    result = self._analyze_single_pattern(pattern_name, pattern_list)
-                    if result:
-                        pattern_analysis[pattern_name] = result
-                        print(f"Analysis complete for {pattern_name}")
-                    else:
-                        print(f"No analysis results for {pattern_name}")
-                except Exception as e:
-                    print(f"Error analyzing pattern {pattern_name}: {str(e)}")
-
-            # Generate relationships
-            relationships = self._analyze_relationships(pattern_analysis)
-
-            # Create final results
-            results = {
-                'summary': {
-                    'total_patterns_detected': len(patterns),
-                    'unique_pattern_types': len(pattern_analysis),
-                    'most_common_patterns': self._get_most_common_patterns(),
-                },
-                'patterns': pattern_analysis,
-                'relationships': relationships,
-                'recommendations': self._generate_recommendations(pattern_analysis),
+        # Process each pattern type in parallel
+        with ThreadPoolExecutor(max_workers=min(len(pattern_groups), 4)) as executor:
+            future_to_pattern = {
+                executor.submit(self._analyze_pattern_group, name, group): name
+                for name, group in pattern_groups.items()
             }
 
-            print("\nAnalysis complete:")
-            print(f"- Total patterns: {results['summary']['total_patterns_detected']}")
-            print(f"- Unique types: {results['summary']['unique_pattern_types']}")
-            print(f"- Pattern types: {list(results['patterns'].keys())}")
+            results = {}
+            for future in as_completed(future_to_pattern):
+                pattern_name = future_to_pattern[future]
+                try:
+                    result = future.result()
+                    if result:
+                        # Add required fields for template
+                        result.update(
+                            {
+                                'maintainability_index': self._calculate_maintainability(pattern_groups[pattern_name]),
+                                'template_structure': pattern_groups[pattern_name][0].template_structure,
+                                'complexity_breakdown': {
+                                    'template': result['complexity'] * 30,  # Scale for display
+                                    'styles': len(pattern_groups[pattern_name][0].associated_styles) * 10,
+                                    'logic': result['complexity'] * 20,
+                                },
+                            }
+                        )
+                        results[pattern_name] = result
+                        print(f"Analysis complete for {pattern_name}")
+                except Exception as e:
+                    print(f"Error analyzing {pattern_name}: {str(e)}")
 
-            return results
+        return {
+            'patterns': results,
+            'summary': {'total_patterns_detected': len(patterns), 'unique_pattern_types': len(results)},
+        }
 
+    def _analyze_pattern_group(self, pattern_name: str, patterns: List[UIPattern]) -> Dict[str, Any]:
+        """Analyzes a group of patterns of the same type"""
+        try:
+            return {
+                'total_usage': len(patterns),
+                'complexity': self._calculate_complexity(patterns[0].template_structure),
+                'best_practices_score': self._evaluate_best_practices(patterns),
+                'variations': len(set(p.template_structure for p in patterns)),
+            }
         except Exception as e:
-            print(f"Error in pattern analysis: {str(e)}")
-            import traceback
-
-            print(traceback.format_exc())
-            raise
+            print(f"Error in pattern group analysis: {str(e)}")
+            return None
 
     def _analyze_relationships(self, pattern_analysis: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
         """Analyzes relationships between patterns"""
@@ -669,3 +672,11 @@ class PatternAnalyzer:
                 break
 
         return changes
+
+    def _calculate_complexity(self, template: str) -> float:
+        nesting_depth = template.count('<')
+        directives = len(re.findall(r'\*ng[A-Za-z]+', template))
+        bindings = len(re.findall(r'\{\{[^}]+\}\}', template))
+        events = len(re.findall(r'\([^)]+\)=', template))
+
+        return round((nesting_depth * 0.5 + directives + bindings * 0.8 + events) / 10)
