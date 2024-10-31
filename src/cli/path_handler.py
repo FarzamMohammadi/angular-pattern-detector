@@ -1,4 +1,9 @@
 from pathlib import Path
+from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import mmap
+import multiprocessing
+import re
 
 
 class PathHandler:
@@ -6,36 +11,60 @@ class PathHandler:
         self.angular_extensions = ['.ts', '.html', '.scss', '.css']
 
     def validate_project_path(self, path: Path) -> bool:
-        """Validates if the given path is a valid Angular project directory."""
+        """Validates if the given path contains Angular components."""
         if not path.exists():
             return False
 
-        # Check for key Angular project indicators
-        package_json = path / 'package.json'
-        angular_json = path / 'angular.json'
-
-        return package_json.exists() and angular_json.exists()
+        # For sample projects, just check if we have component files
+        component_files = list(path.rglob("*.component.ts"))
+        return len(component_files) > 0
 
     def find_component_files(self, base_path: Path) -> List[Path]:
-        """Finds all Angular component files in the given directory."""
+        """Finds all Angular component files"""
+        # First, get all TypeScript files
+        all_ts_files = list(base_path.rglob("*.component.ts"))
+        if not all_ts_files:
+            print(f"No .component.ts files found in {base_path}")
+            return []
+
+        print(f"Found {len(all_ts_files)} potential component files")
+
         component_files = []
-
-        if not base_path.exists():
-            return component_files
-
-        # Find all .ts files that follow Angular component naming pattern
-        for file_path in base_path.rglob("*.component.ts"):
+        for file_path in all_ts_files:
             if self._is_valid_component(file_path):
                 component_files.append(file_path)
+                print(f"Valid component found: {file_path}")
+
+        if not component_files:
+            print("No valid Angular components found after validation")
+        else:
+            print(f"Found {len(component_files)} valid Angular components")
 
         return component_files
 
-    def get_related_files(self, component_path: Path) -> dict:
-        """Gets related template, style, and spec files for a component."""
-        base_name = component_path.stem.replace('.component', '')
-        parent_dir = component_path.parent
+    def _is_valid_component(self, file_path: Path) -> bool:
+        """Validates if a file is an Angular component file"""
+        try:
+            # Read the file content directly for small files
+            content = file_path.read_text()
 
-        related_files = {'typescript': component_path, 'template': None, 'styles': [], 'spec': None}
+            # Debug output
+            print(f"Validating component: {file_path}")
+            has_component = '@Component' in content
+            print(f"Has @Component decorator: {has_component}")
+
+            return has_component
+
+        except Exception as e:
+            print(f"Error validating component {file_path}: {str(e)}")
+            return False
+
+    def get_related_files(self, component_file: Path) -> Dict[str, Path]:
+        """Gets related template, style, and spec files for a component."""
+        base_name = component_file.stem.replace('.component', '')
+        parent_dir = component_file.parent
+
+        related_files = {'typescript': component_file, 'template': None, 'styles': [], 'spec': None}
 
         # Find template file
         template = parent_dir / f"{base_name}.component.html"
@@ -55,10 +84,12 @@ class PathHandler:
 
         return related_files
 
-    def _is_valid_component(self, file_path: Path) -> bool:
-        """Validates if a file is an Angular component file."""
-        try:
-            content = file_path.read_text()
-            return '@Component' in content
-        except Exception:
-            return False
+    def _debug_path_search(self, base_path: Path):
+        """Debug method to print file search results"""
+        print(f"\nDebug: Searching in {base_path}")
+        print("Found files:")
+        for ext in ['*.component.ts', '*.component.html', '*.component.scss', '*.component.css']:
+            files = list(base_path.rglob(ext))
+            print(f"{ext}: {len(files)} files")
+            for f in files[:5]:  # Show first 5 files of each type
+                print(f"  - {f}")

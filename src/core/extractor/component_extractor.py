@@ -1,37 +1,51 @@
 from typing import Dict, Any, List
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
 
 
-@dataclass
+@dataclass(frozen=True)
 class UIPattern:
     name: str
     frequency: int
-    variations: List[str]
-    components: List[str]
+    variations: tuple
+    components: tuple
     template_structure: str
     html_structure: str = ''
     associated_styles: Dict[str, str] = field(default_factory=dict)
     isolated_template: str = ''
     selector_path: str = ''
 
+    def __hash__(self):
+        """Make UIPattern hashable"""
+        return hash((self.name, self.template_structure, self.html_structure, self.selector_path))
+
+    def __eq__(self, other):
+        """Define equality for UIPattern"""
+        if not isinstance(other, UIPattern):
+            return False
+        return (
+            self.name == other.name
+            and self.template_structure == other.template_structure
+            and self.html_structure == other.html_structure
+            and self.selector_path == other.selector_path
+        )
+
 
 class ComponentExtractor:
     def __init__(self):
-        self.patterns = {}
         self.structural_patterns = {
-            'list': r'\*ngFor\s*=\s*"[^"]*"',
-            'conditional': r'\*ngIf\s*=\s*"[^"]*"',
-            'form': r'<form[^>]*>.*?</form>',
-            'input': r'<input[^>]*>',
-            'button': r'<button[^>]*>.*?</button>',
+            'data-list': r'\*ngFor\s*=\s*"[^"]*"',
+            'conditional-content': r'\*ngIf\s*=\s*"[^"]*"',
+            'form-group': r'<form[^>]*>.*?</form>',
+            'input-field': r'<input[^>]*>',
+            'action-button': r'<button[^>]*>.*?</button>',
+            'data-binding': r'\{\{[^}]+\}\}',
+            'event-binding': r'\([^)]+\)="[^"]+"',
         }
 
     def extract_patterns(self, component_data: Dict[str, Any]) -> List[UIPattern]:
-        """
-        Extracts UI patterns from a parsed component
-        """
+        """Extracts UI patterns from a parsed component"""
         patterns = []
         template = component_data.get('template', '')
         styles = component_data.get('styles', [])
@@ -39,11 +53,15 @@ class ComponentExtractor:
         if not template:
             return patterns
 
+        print(f"Analyzing template:\n{template[:200]}...")  # Debug print
+
         # Extract structural patterns with visual context
         for pattern_name, pattern_regex in self.structural_patterns.items():
             matches = re.finditer(pattern_regex, template, re.DOTALL)
             for match in matches:
                 pattern_html = match.group(0)
+                print(f"Found pattern {pattern_name}: {pattern_html[:100]}...")  # Debug print
+
                 isolated_template = self._isolate_template(pattern_html)
                 selector_path = self._extract_selector_path(pattern_html)
                 associated_styles = self._extract_associated_styles(selector_path, styles)
@@ -51,8 +69,8 @@ class ComponentExtractor:
                 pattern = UIPattern(
                     name=pattern_name,
                     frequency=1,
-                    variations=[pattern_html],
-                    components=[component_data.get('class_name', 'Unknown')],
+                    variations=tuple([pattern_html]),
+                    components=tuple([component_data.get('class_name', 'Unknown')]),
                     template_structure=self._extract_template_structure(pattern_html),
                     html_structure=pattern_html,
                     associated_styles=associated_styles,
@@ -61,6 +79,7 @@ class ComponentExtractor:
                 )
                 patterns.append(pattern)
 
+        print(f"Found {len(patterns)} patterns in component")  # Debug print
         return patterns
 
     def _isolate_template(self, html: str) -> str:
@@ -120,8 +139,8 @@ class ComponentExtractor:
             pattern = UIPattern(
                 name=f"component-usage-{component_name}",
                 frequency=frequency,
-                variations=[],
-                components=[component_name],
+                variations=(),
+                components=(component_name,),
                 template_structure=f"<{component_name}></{component_name}>",
             )
             patterns.append(pattern)

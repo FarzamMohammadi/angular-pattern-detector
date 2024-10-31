@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ name }} - Pattern Details</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+    <header>
+        <h1>{{ name }}</h1>
+        <nav>
+            <a href="index.html">Back to Catalog</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="pattern-details">
+            <h2>Pattern Details</h2>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <h3>Usage Statistics</h3>
+                    <div class="stat-item">
+                        <span class="label">Total Usage:</span>
+                        <span class="value">{{ usage }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Component Coverage:</span>
+                        <span class="value">{{ coverage }}</span>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <h3>Quality Metrics</h3>
+                    <div class="stat-item">
+                        <span class="label">Complexity Score:</span>
+                        <span class="value">{{ "%.2f"|format(complexity) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Accessibility Score:</span>
+                        <span class="value">{{ "%.2f"|format(accessibility_score) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Maintainability Index:</span>
+                        <span class="value">{{ "%.2f"|format(maintainability_index) }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pattern-preview">
+            <h2>Implementation</h2>
+            <div class="preview-content">
+                <!-- Pattern-specific preview -->
+                {% if 'form' in name.lower() %}
+                <div class="pattern-form">
+                    <form>
+                        <input type="text" placeholder="Sample input">
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+                {% elif 'button' in name.lower() %}
+                <div class="pattern-button">
+                    <button>Sample Button</button>
+                </div>
+                {% elif 'list' in name.lower() %}
+                <div class="pattern-list">
+                    <ul>
+                        <li>Sample Item 1</li>
+                        <li>Sample Item 2</li>
+                        <li>Sample Item 3</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="code-block">
+                <h3>Template Structure</h3>
+                <pre><code>{{ template_structure }}</code></pre>
+            </div>
+
+            {% if html_structure %}
+            <div class="code-block">
+                <h3>HTML Structure</h3>
+                <pre><code>{{ html_structure }}</code></pre>
+            </div>
+            {% endif %}
+        </section>
+
+        {% if styles %}
+        <section class="styles">
+            <h2>Associated Styles</h2>
+            <pre><code>{{ styles|tojson(indent=2) }}</code></pre>
+        </section>
+        {% endif %}
+
+        <section class="complexity-analysis">
+            <h2>Complexity Analysis</h2>
+            <div class="complexity-breakdown">
+                <div class="complexity-item">
+                    <span class="label">Template Complexity</span>
+                    <div class="progress-bar" style="width: {{ complexity_breakdown.template }}%"></div>
+                </div>
+                <div class="complexity-item">
+                    <span class="label">Style Complexity</span>
+                    <div class="progress-bar" style="width: {{ complexity_breakdown.styles }}%"></div>
+                </div>
+                <div class="complexity-item">
+                    <span class="label">Logic Complexity</span>
+                    <div class="progress-bar" style="width: {{ complexity_breakdown.logic }}%"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

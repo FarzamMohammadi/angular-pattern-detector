@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UI Pattern Catalog</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script src="/assets/main.js" defer></script>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="../assets/main.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>UI Pattern Catalog</h1>
+        <nav>
+            <a href="relationships.html">View Relationships</a>
+        </nav>
+    </header>
+    
+    <main>
+        <!-- Summary Section -->
+        <section class="summary">
+            <h2>Analysis Summary</h2>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="label">Total Patterns</span>
+                    <span class="value">{{ summary.total_patterns_detected }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Unique Pattern Types</span>
+                    <span class="value">{{ summary.unique_pattern_types }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Patterns Section -->
+        <section class="patterns">
+            <h2>Detected Patterns</h2>
+            {% for name, details in patterns.items() %}
+            <div class="pattern-card">
+                <div class="pattern-header">
+                    <h3 class="pattern-title">{{ name }}</h3>
+                    <a href="{{ name.lower().replace(' ', '-') }}.html" class="view-details">View Details</a>
+                </div>
+
+                <div class="pattern-metrics">
+                    <div class="metric">
+                        <div class="metric-value">{{ details.total_usage }}</div>
+                        <div class="metric-label">Usage Count</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ "%.2f"|format(details.complexity) }}</div>
+                        <div class="metric-label">Complexity Score</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{{ "%.2f"|format(details.maintainability_index) }}</div>
+                        <div class="metric-label">Maintainability</div>
+                    </div>
+                </div>
+
+                <!-- Pattern Preview -->
+                <div class="pattern-preview">
+                    <div class="preview-header">
+                        <h4>Implementation Preview</h4>
+                    </div>
+                    <div class="preview-content">
+                        <div class="code-block">
+                            <pre><code>{{ details.template_structure }}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complexity Breakdown -->
+                <div class="complexity-breakdown">
+                    <h4>Complexity Analysis</h4>
+                    <div class="complexity-item">
+                        <span class="label">Template</span>
+                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.template }}%"></div>
+                    </div>
+                    <div class="complexity-item">
+                        <span class="label">Styles</span>
+                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.styles }}%"></div>
+                    </div>
+                    <div class="complexity-item">
+                        <span class="label">Logic</span>
+                        <div class="progress-bar" style="width: {{ details.complexity_breakdown.logic }}%"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html> 
