@@ -33,7 +33,7 @@ The generated catalog displays key metrics for each detected UI pattern:
    ```
 4. Run
     ```sh
-    python main.py --project-path /path/to/angular/project --output-format both --export-path ./custom-report.json
+    python main.py --project-path .\sample-project\src\ --output-format all --generate-catalog
     ```
 
 > Note: This is an MVP proof-of-concept for pattern detection and analysis in Angular applications.

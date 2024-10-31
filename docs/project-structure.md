@@ -1,29 +1,41 @@
+```plaintext
 angular-pattern-detector/
 ├── src/
 │   ├── cli/
-│   │   ├── cli_interface.py        # Handles command line interactions and progress display
-│   │   └── path_handler.py         # Manages file system operations and path resolution
+│   │   ├── cli_interface.py        # CLI interactions and progress tracking
+│   │   └── path_handler.py         # File system operations and path resolution
 │   ├── core/
 │   │   ├── parser/
-│   │   │   └── angular_parser.py   # Parses Angular components and extracts metadata
+│   │   │   └── angular_parser.py   # Angular component parsing
 │   │   ├── extractor/
-│   │   │   └── component_extractor.py  # Extracts UI patterns from component templates
+│   │   │   └── component_extractor.py  # Pattern extraction from templates
 │   │   ├── analyzer/
-│   │   │   ├── pattern_analyzer.py     # Analyzes patterns for complexity and relationships
-│   │   │   ├── usage_counter.py        # Tracks pattern usage across components
-│   │   │   └── pattern_matcher.py      # Matches similar patterns and variations
+│   │   │   └── pattern_analyzer.py     # Analyzes usage, complexity, relationships, maintainability, and accessibility
 │   │   └── output/
 │   │       ├── templates/
-│   │       │   ├── patterns/
-│   │       │   │   ├── index.html          # Main catalog page template
-│   │       │   │   ├── pattern.html        # Individual pattern page template
-│   │       │   │   └── relationships.html   # Pattern relationships view template
-│   │       │   ├── catalog_generator.py     # Generates HTML pattern catalog
-│   │       │   └── report_generator.py      # Generates analysis reports
-├── pattern-catalog/                         # Generated catalog output
+│   │       │   ├── assets/
+│   │       │   │   ├── styles.css      # Catalog styling
+│   │       │   │   └── main.js         # Interactive features
+│   │       │   └── patterns/
+│   │       │       ├── index.html      # Catalog main page
+│   │       │       ├── pattern.html    # Individual pattern pages
+│   │       │       └── relationships.html  # Pattern relationship view
+│   │       ├── catalog_generator.py    # HTML catalog generation
+│   │       └── report_generator.py     # Analysis reports
+├── docs/
+│   ├── progress.md                 # Implementation status
+│   ├── project-structure.md        # Project documentation
+│   └── system.md                   # System architecture
+├── pattern-catalog/               # Generated output
 │   ├── assets/
-│   │   ├── styles.css                      # Catalog styling
-│   │   └── main.js                         # Interactive features
+│   │   ├── styles.css            # Generated styles
+│   │   ├── main.js              # Generated scripts
+│   │   └── d3.min.js            # D3.js for visualizations
 │   └── patterns/
-│       └── index.html                      # Generated catalog index
-└── main.py                                 # Application entry point
+│       ├── index.html           # Generated catalog
+│       ├── *.html              # Generated pattern pages
+│       └── relationships.html   # Generated relationship view
+├── requirements.txt             # Python dependencies
+├── README.md                   # Project documentation
+└── main.py                     # Application entry point
+```
