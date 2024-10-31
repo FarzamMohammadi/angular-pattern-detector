@@ -1,8 +1,17 @@
 # Angular Pattern Detector
 
-A Python-based tool for detecting UI patterns in Angular components.
+A proof-of-concept tool for detecting and analyzing UI patterns in Angular components.
 
-----
+## What it Shows
+
+The generated catalog displays key metrics for each detected UI pattern:
+- **Usage Count**: How often the pattern appears across components
+- **Complexity Score**: Combined measure of template, style, and logic complexity
+- **Maintainability Index**: Code maintainability rating (0-1)
+- **Complexity Breakdown**:
+  - Template: HTML structure and directive usage
+  - Styles: CSS rule complexity
+  - Logic: Data binding and event handling density
 
 ## Run
 1. Create a virtual environment:
@@ -26,3 +35,5 @@ A Python-based tool for detecting UI patterns in Angular components.
     ```sh
     python main.py --project-path /path/to/angular/project --output-format both --export-path ./custom-report.json
     ```
+
+> Note: This is an MVP proof-of-concept for pattern detection and analysis in Angular applications.
