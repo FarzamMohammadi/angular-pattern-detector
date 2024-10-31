@@ -226,3 +226,21 @@ main {
     align-items: center;
     margin-bottom: 1rem;
 }
+
+#relationship-graph {
+    width: 800px;
+    height: 600px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#relationship-graph svg {
+    background: #fff;
+}
+
+.error {
+    color: red;
+    text-align: center;
+    padding: 20px;
+}

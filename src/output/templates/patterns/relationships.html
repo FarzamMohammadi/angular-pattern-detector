@@ -2,8 +2,9 @@
 <html>
 <head>
     <title>Pattern Relationships</title>
-    <link rel="stylesheet" href="assets/styles.css">
-    <script src="assets/d3.min.js"></script>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <!-- Use D3.js CDN directly -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <header>
@@ -14,53 +15,113 @@
     </header>
     
     <main>
+        <section class="visualization-info">
+            <h2>Pattern Relationships Visualization</h2>
+            <p>This graph shows how different UI patterns are related to each other:</p>
+            <ul>
+                <li>Node size indicates pattern usage frequency</li>
+                <li>Lines show relationships between patterns</li>
+                <li>Hover over nodes to see pattern names</li>
+                <li>Drag nodes to explore relationships</li>
+            </ul>
+        </section>
+
         <div id="relationship-graph"></div>
         
         <script>
+            // Debug output
+            console.log('Starting D3 visualization...');
+            
             const data = {{ graph_data|tojson|safe }};
+            console.log('Graph Data:', data);
             
-            const width = document.getElementById('relationship-graph').clientWidth;
-            const height = 600;
-            
-            const svg = d3.select('#relationship-graph')
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height);
+            if (!data.nodes || !data.nodes.length) {
+                document.getElementById('relationship-graph').innerHTML = 
+                    '<p class="error">No pattern relationships found. Check console for details.</p>';
+            } else {
+                const width = 800;
+                const height = 600;
                 
-            const simulation = d3.forceSimulation(data.nodes)
-                .force('link', d3.forceLink(data.links).id(d => d.id))
-                .force('charge', d3.forceManyBody().strength(-100))
-                .force('center', d3.forceCenter(width / 2, height / 2));
-                
-            const link = svg.append('g')
-                .selectAll('line')
-                .data(data.links)
-                .join('line')
-                .attr('stroke', '#999')
-                .attr('stroke-opacity', 0.6)
-                .attr('stroke-width', d => Math.sqrt(d.value));
-                
-            const node = svg.append('g')
-                .selectAll('circle')
-                .data(data.nodes)
-                .join('circle')
-                .attr('r', 5)
-                .attr('fill', '#69b3a2');
-                
-            node.append('title')
-                .text(d => d.id);
-                
-            simulation.on('tick', () => {
-                link
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
+                const svg = d3.select('#relationship-graph')
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height);
                     
-                node
-                    .attr('cx', d => d.x)
-                    .attr('cy', d => d.y);
-            });
+                const simulation = d3.forceSimulation(data.nodes)
+                    .force('link', d3.forceLink(data.links).id(d => d.id))
+                    .force('charge', d3.forceManyBody().strength(-200))
+                    .force('center', d3.forceCenter(width / 2, height / 2));
+                    
+                const link = svg.append('g')
+                    .selectAll('line')
+                    .data(data.links)
+                    .join('line')
+                    .attr('stroke', '#999')
+                    .attr('stroke-opacity', 0.6)
+                    .attr('stroke-width', d => Math.sqrt(d.value));
+                    
+                const colorScale = d3.scaleLinear()
+                    .domain([0, 1])
+                    .range(['#69b3a2', '#ff7f7f']);
+                    
+                const node = svg.append('g')
+                    .selectAll('circle')
+                    .data(data.nodes)
+                    .join('circle')
+                    .attr('r', d => Math.sqrt(d.value) * 5)
+                    .attr('fill', d => colorScale(d.complexity))
+                    .call(drag(simulation));
+                    
+                // Add labels to nodes
+                const labels = svg.append('g')
+                    .selectAll('text')
+                    .data(data.nodes)
+                    .join('text')
+                    .text(d => d.id)
+                    .attr('font-size', '10px')
+                    .attr('dx', 12)
+                    .attr('dy', 4);
+                    
+                simulation.on('tick', () => {
+                    link
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+                        
+                    node
+                        .attr('cx', d => d.x)
+                        .attr('cy', d => d.y);
+                        
+                    labels
+                        .attr('x', d => d.x)
+                        .attr('y', d => d.y);
+                });
+
+                function drag(simulation) {
+                    function dragstarted(event) {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        event.subject.fx = event.subject.x;
+                        event.subject.fy = event.subject.y;
+                    }
+                    
+                    function dragged(event) {
+                        event.subject.fx = event.x;
+                        event.subject.fy = event.y;
+                    }
+                    
+                    function dragended(event) {
+                        if (!event.active) simulation.alphaTarget(0);
+                        event.subject.fx = null;
+                        event.subject.fy = null;
+                    }
+                    
+                    return d3.drag()
+                        .on('start', dragstarted)
+                        .on('drag', dragged)
+                        .on('end', dragended);
+                }
+            }
         </script>
     </main>
 </body>

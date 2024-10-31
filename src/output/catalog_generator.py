@@ -6,6 +6,7 @@ import jinja2
 from typing import Dict, Any, List
 from ..core.extractor.component_extractor import UIPattern
 import re
+import urllib.request
 
 
 class CatalogGenerator:
@@ -35,48 +36,37 @@ class CatalogGenerator:
     def _setup_output_directory(self):
         """Creates necessary directories and copies assets"""
         try:
-            # Create base directories
-            self.output_dir.mkdir(parents=True, exist_ok=True)
+            # Create directories
             patterns_dir = self.output_dir / 'patterns'
             assets_dir = self.output_dir / 'assets'
-
             patterns_dir.mkdir(parents=True, exist_ok=True)
             assets_dir.mkdir(parents=True, exist_ok=True)
 
-            # Debug print current structure
-            print("\nSetting up directory structure:")
-            print(f"Output dir: {self.output_dir}")
-            print(f"Patterns dir: {patterns_dir}")
-            print(f"Assets dir: {assets_dir}")
+            # Try to copy D3.js from CDN, fallback to local or CDN link if failed
+            d3_dest = assets_dir / 'd3.min.js'
+            if not d3_dest.exists():
+                try:
+                    import urllib.request
 
-            # Copy assets
+                    d3_url = "https://d3js.org/d3.v7.min.js"
+                    urllib.request.urlretrieve(d3_url, d3_dest)
+                    print(f"✓ Downloaded d3.min.js to {d3_dest}")
+                except Exception as e:
+                    print(f"Warning: Could not download D3.js: {str(e)}")
+                    print("Using CDN link instead")
+                    # We'll update the template to use CDN link directly
+
+            # Copy other assets
             template_assets = Path(__file__).parent / 'templates' / 'assets'
-            print(f"\nCopying assets from: {template_assets}")
-
             if template_assets.exists():
-                # Copy CSS
-                css_source = template_assets / 'styles.css'
-                css_dest = assets_dir / 'styles.css'
-                if css_source.exists():
-                    shutil.copy2(css_source, css_dest)
-                    print(f"✓ Copied styles.css to {css_dest}")
-                else:
-                    print(f"✗ Error: styles.css not found at {css_source}")
-
-                # Copy JavaScript
-                js_source = template_assets / 'main.js'
-                js_dest = assets_dir / 'main.js'
-                if js_source.exists():
-                    shutil.copy2(js_source, js_dest)
-                    print(f"✓ Copied main.js to {js_dest}")
-                else:
-                    print(f"✗ Error: main.js not found at {js_source}")
-            else:
-                print(f"✗ Error: Assets directory not found at {template_assets}")
-
-            # Verify final structure
-            print("\nFinal directory structure:")
-            self._print_directory_structure(self.output_dir)
+                for asset in ['styles.css', 'main.js']:
+                    source = template_assets / asset
+                    dest = assets_dir / asset
+                    if source.exists():
+                        shutil.copy2(source, dest)
+                        print(f"✓ Copied {asset} to {dest}")
+                    else:
+                        print(f"✗ Warning: {asset} not found at {source}")
 
         except Exception as e:
             print(f"Error setting up directories: {str(e)}")
@@ -308,10 +298,13 @@ class CatalogGenerator:
             # Setup directories and copy assets
             self._setup_output_directory()
 
-            # Generate content
+            # Generate relationships data
+            relationships = self._generate_relationship_data()
+
+            # Generate pages
             self._generate_index(analysis_results)
             self._generate_pattern_pages(self.patterns)
-            self._generate_relationships_page()
+            self._generate_relationship_graph(relationships)
 
             # Verify everything is in place
             if not self._verify_assets():
@@ -381,35 +374,18 @@ class CatalogGenerator:
         except Exception as e:
             print(f"Error generating page for pattern {pattern_name}: {str(e)}")
 
-    def _generate_relationships_page(self):
-        """Generates the pattern relationships visualization page"""
-        template = self.template_env.get_template('patterns/relationships.html')
+    def _generate_relationship_data(self) -> Dict[str, List[str]]:
+        """Generate relationships between patterns based on complexity similarity"""
+        relationships = {}
 
-        # Generate graph data for pattern relationships
-        graph_data = {'nodes': [], 'links': []}
-
-        # Add nodes for each pattern
-        for pattern_name in self.patterns.keys():
-            graph_data['nodes'].append(
-                {
-                    'id': pattern_name,
-                    'group': 1,
-                    'value': self.patterns[pattern_name].get('total_usage', 1),  # Node size based on usage
-                }
-            )
-
-        # Add links between related patterns
         for pattern_name, pattern_data in self.patterns.items():
-            related_patterns = pattern_data.get('related_patterns', [])
-            for related in related_patterns:
-                if related in self.patterns:  # Only add links to existing patterns
-                    graph_data['links'].append({'source': pattern_name, 'target': related, 'value': 1})
+            relationships[pattern_name] = []
+            pattern_complexity = pattern_data.get('complexity', 0)
 
-        try:
-            # Generate the relationships page
-            relationships_content = template.render(graph_data=graph_data)
-            relationships_file = self.output_dir / 'patterns' / 'relationships.html'  # Updated path
-            relationships_file.write_text(relationships_content)
-            print(f"Generated relationships visualization at {relationships_file}")
-        except Exception as e:
-            print(f"Error generating relationships page: {str(e)}")
+            for other_name, other_data in self.patterns.items():
+                if pattern_name != other_name:
+                    other_complexity = other_data.get('complexity', 0)
+                    if abs(pattern_complexity - other_complexity) < 0.2:
+                        relationships[pattern_name].append(other_name)
+
+        return relationships
