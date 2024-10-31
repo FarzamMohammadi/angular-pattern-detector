@@ -1,43 +1,29 @@
 angular-pattern-detector/
 ├── src/
-│   ├── __init__.py
 │   ├── cli/
-│   │   ├── __init__.py
-│   │   ├── cli_interface.py
-│   │   └── path_handler.py
+│   │   ├── cli_interface.py        # Handles command line interactions and progress display
+│   │   └── path_handler.py         # Manages file system operations and path resolution
 │   ├── core/
-│   │   ├── __init__.py
 │   │   ├── parser/
-│   │   │   ├── __init__.py
-│   │   │   └── angular_parser.py
+│   │   │   └── angular_parser.py   # Parses Angular components and extracts metadata
 │   │   ├── extractor/
-│   │   │   ├── __init__.py
-│   │   │   └── component_extractor.py
+│   │   │   └── component_extractor.py  # Extracts UI patterns from component templates
 │   │   ├── analyzer/
-│   │   │   ├── __init__.py
-│   │   │   ├── pattern_analyzer.py
-│   │   │   ├── usage_counter.py
-│   │   │   └── pattern_matcher.py
-│   │   ├── profiler/
-│   │   │   ├── __init__.py
-│   │   │   └── pattern_profiler.py
+│   │   │   ├── pattern_analyzer.py     # Analyzes patterns for complexity and relationships
+│   │   │   ├── usage_counter.py        # Tracks pattern usage across components
+│   │   │   └── pattern_matcher.py      # Matches similar patterns and variations
 │   │   └── output/
 │   │       ├── templates/
-│   │       │   ├── assets/
-│   │       │   │   ├── styles.css
-│   │       │   │   ├── main.js
-│   │       │   │   └── d3.min.js
 │   │       │   ├── patterns/
-│   │       │   │   ├── index.html
-│   │       │   │   ├── pattern.html
-│   │       │   │   └── relationships.html
-│   │       │   ├── __init__.py
-│   │       │   ├── catalog_generator.py
-│   │       │   ├── cli_reporter.py
-│   │       │   ├── json_exporter.py
-│   │       │   └── report_generator.py
-│   └── tests/
-│       └── __init__.py
-├── README.md
-├── requirements.txt
-└── main.py
+│   │       │   │   ├── index.html          # Main catalog page template
+│   │       │   │   ├── pattern.html        # Individual pattern page template
+│   │       │   │   └── relationships.html   # Pattern relationships view template
+│   │       │   ├── catalog_generator.py     # Generates HTML pattern catalog
+│   │       │   └── report_generator.py      # Generates analysis reports
+├── pattern-catalog/                         # Generated catalog output
+│   ├── assets/
+│   │   ├── styles.css                      # Catalog styling
+│   │   └── main.js                         # Interactive features
+│   └── patterns/
+│       └── index.html                      # Generated catalog index
+└── main.py                                 # Application entry point
