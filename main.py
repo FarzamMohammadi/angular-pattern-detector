@@ -31,7 +31,6 @@ def main():
     parser.add_argument('--output-format', choices=['cli', 'json', 'both', 'all'], default='both', help='Output format')
     parser.add_argument('--export-path', help='Path for JSON export', default='./pattern-report.json')
     parser.add_argument('--generate-catalog', action='store_true', help='Generate HTML pattern catalog')
-    parser.add_argument('--generate-docs', action='store_true', help='Generate developer documentation')
 
     args = parser.parse_args()
 
