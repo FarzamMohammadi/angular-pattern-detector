@@ -113,13 +113,16 @@ class CatalogGenerator:
 
         for pattern_name, pattern_data in patterns.items():
             try:
+                # Calculate complexity breakdown
+                complexity_breakdown = {
+                    'template': self._calculate_template_complexity(pattern_data),
+                    'styles': self._calculate_style_complexity(pattern_data),
+                    'logic': self._calculate_logic_complexity(pattern_data),
+                }
+
                 # Create the details structure expected by the template
                 details = {
-                    'complexity_breakdown': {
-                        'template': pattern_data.get('complexity_breakdown', {}).get('template', 0),
-                        'styles': pattern_data.get('complexity_breakdown', {}).get('styles', 0),
-                        'logic': pattern_data.get('complexity_breakdown', {}).get('logic', 0),
-                    },
+                    'complexity_breakdown': complexity_breakdown,
                     'optimization_suggestions': self._generate_optimization_suggestions(pattern_data),
                     'usage_trend': self._calculate_usage_trend(pattern_data),
                 }
@@ -137,8 +140,7 @@ class CatalogGenerator:
                     'variations': pattern_data.get('variations', []),
                     'accessibility_score': pattern_data.get('accessibility_score', 0.0),
                     'maintainability_index': pattern_data.get('maintainability_index', 0.0),
-                    'best_practices_score': pattern_data.get('best_practices_score', 0.0),
-                    'common_contexts': pattern_data.get('common_contexts', []),
+                    'complexity_breakdown': complexity_breakdown,
                 }
 
                 # Generate pattern page
