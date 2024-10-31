@@ -111,6 +111,71 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        
+        /* Enhanced node styling */
+        .node {
+            stroke: #fff;
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .node:hover {
+            stroke: #333;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 6px rgba(0,0,0,0.3));
+        }
+        
+        /* Enhanced link styling */
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+        
+        .link.highlighted {
+            stroke: #666;
+            stroke-width: 2px;
+            stroke-opacity: 0.8;
+        }
+        
+        /* Enhanced preview styling */
+        .pattern-preview {
+            background: linear-gradient(to bottom right, #fff, #f8f9fa);
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        
+        .interactive-preview {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .preview-name {
+            color: #2c3e50;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        
+        /* Professional metrics display */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .metric {
+            background: linear-gradient(to bottom right, #f8f9fa, #fff);
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -188,9 +253,9 @@
         // Force simulation
         const simulation = d3.forceSimulation(data.nodes)
             .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
-            .force('charge', d3.forceManyBody().strength(-300))
+            .force('charge', d3.forceManyBody().strength(-500))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(30));
+            .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.value) * 4 + 8));
         
         // Create links
         const link = container.append('g')
@@ -198,16 +263,19 @@
             .data(data.links)
             .join('line')
             .attr('stroke', '#999')
-            .attr('stroke-opacity', 0.6);
+            .attr('stroke-opacity', 0.6)
+            .attr('stroke-width', d => Math.sqrt(d.value));
         
         // Create nodes
         const node = container.append('g')
             .selectAll('circle')
             .data(data.nodes)
             .join('circle')
-            .attr('r', 10)
+            .attr('r', d => Math.sqrt(d.value) * 4 + 6)
             .attr('fill', d => d3.interpolateRdYlGn(1 - d.complexity))
             .attr('class', 'node')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
             .call(drag(simulation));
         
         // Add labels
@@ -227,11 +295,11 @@
                 .attr('y1', d => d.source.y)
                 .attr('x2', d => d.target.x)
                 .attr('y2', d => d.target.y);
-                
+            
             node
                 .attr('cx', d => d.x)
                 .attr('cy', d => d.y);
-                
+            
             labels
                 .attr('x', d => d.x)
                 .attr('y', d => d.y);

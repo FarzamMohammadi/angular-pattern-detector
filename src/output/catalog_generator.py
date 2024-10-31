@@ -390,23 +390,28 @@ class CatalogGenerator:
 
         for pattern_name, pattern_data in self.patterns.items():
             relationships[pattern_name] = []
-            pattern_complexity = pattern_data.get('complexity', 0)
-            pattern_usage = pattern_data.get('total_usage', 0)
+            # Add validation and defaults
+            pattern_complexity = max(0.0, min(1.0, pattern_data.get('complexity', 0)))  # Ensure 0-1 range
+            pattern_usage = max(1, pattern_data.get('total_usage', 1))  # Ensure minimum usage of 1
 
             for other_name, other_data in self.patterns.items():
                 if pattern_name != other_name:
-                    other_complexity = other_data.get('complexity', 0)
-                    other_usage = other_data.get('total_usage', 0)
+                    other_complexity = max(0.0, min(1.0, other_data.get('complexity', 0)))
+                    other_usage = max(1, other_data.get('total_usage', 1))
 
-                    # Calculate relationship strength based on complexity similarity
-                    similarity = 1 - abs(pattern_complexity - other_complexity)
-                    if similarity > 0.7:  # Only connect fairly similar patterns
+                    # Enhanced similarity calculation
+                    complexity_similarity = 1 - abs(pattern_complexity - other_complexity)
+                    usage_similarity = min(pattern_usage, other_usage) / max(pattern_usage, other_usage)
+                    similarity = complexity_similarity * 0.7 + usage_similarity * 0.3  # Weighted score
+
+                    if similarity > 0.6:  # Slightly lower threshold for more connections
                         relationships[pattern_name].append(
                             {
                                 'name': other_name,
                                 'complexity': other_complexity,
                                 'usage': other_usage,
                                 'similarity': similarity,
+                                'type': other_data.get('pattern_type', 'unknown'),
                             }
                         )
 
