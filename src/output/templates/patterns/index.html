@@ -31,9 +31,43 @@
             </div>
         </section>
 
+        <section class="metrics-explanation">
+            <h2>Understanding the Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-explanation">
+                    <h3>Usage Count</h3>
+                    <p>Number of times this pattern appears across all components in the codebase.</p>
+                </div>
+                <div class="metric-explanation">
+                    <h3>Complexity Score</h3>
+                    <p>Combined score (0-1) based on template nesting, style rules, and logic density:
+                        <ul>
+                            <li>Template: Based on HTML nesting depth and Angular directives</li>
+                            <li>Styles: Number and complexity of CSS rules</li>
+                            <li>Logic: Density of data bindings and event handlers</li>
+                        </ul>
+                    </p>
+                </div>
+                <div class="metric-explanation">
+                    <h3>Maintainability Index</h3>
+                    <p>Score (0-1) indicating how maintainable the pattern is, based on complexity, coupling, and cohesion.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="pattern-recommendations">
+            <h2>Recommendations</h2>
+            <div class="recommendation-card">
+                <h3>Optimization Opportunities</h3>
+                <ul>
+                    <li>Consider breaking down complex patterns (complexity > 0.7)</li>
+                    <li>Standardize similar patterns across components</li>
+                    <li>Review high-usage patterns for optimization</li>
+                </ul>
+            </div>
+        </section>
+
         <!-- Patterns Section -->
-        <section class="patterns">
-            <h2>Detected Patterns</h2>
             {% for name, details in patterns.items() %}
             <div class="pattern-card">
                 <div class="pattern-header">

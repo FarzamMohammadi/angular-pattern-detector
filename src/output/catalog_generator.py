@@ -30,6 +30,8 @@ class CatalogGenerator:
         # Register the filter
         self.template_env.filters['tojson'] = json_filter
 
+        self.patterns = {}  # Add this line to store patterns
+
     def _setup_output_directory(self):
         """Creates necessary directories and copies assets"""
         try:
@@ -300,12 +302,16 @@ class CatalogGenerator:
     def generate_catalog(self, analysis_results: Dict[str, Any]):
         """Main method to generate the catalog"""
         try:
+            # Store patterns data
+            self.patterns = analysis_results.get('patterns', {})
+
             # Setup directories and copy assets
             self._setup_output_directory()
 
             # Generate content
             self._generate_index(analysis_results)
-            self._generate_pattern_pages(analysis_results.get('patterns', {}))
+            self._generate_pattern_pages(self.patterns)
+            self._generate_relationships_page()
 
             # Verify everything is in place
             if not self._verify_assets():
@@ -374,3 +380,36 @@ class CatalogGenerator:
 
         except Exception as e:
             print(f"Error generating page for pattern {pattern_name}: {str(e)}")
+
+    def _generate_relationships_page(self):
+        """Generates the pattern relationships visualization page"""
+        template = self.template_env.get_template('patterns/relationships.html')
+
+        # Generate graph data for pattern relationships
+        graph_data = {'nodes': [], 'links': []}
+
+        # Add nodes for each pattern
+        for pattern_name in self.patterns.keys():
+            graph_data['nodes'].append(
+                {
+                    'id': pattern_name,
+                    'group': 1,
+                    'value': self.patterns[pattern_name].get('total_usage', 1),  # Node size based on usage
+                }
+            )
+
+        # Add links between related patterns
+        for pattern_name, pattern_data in self.patterns.items():
+            related_patterns = pattern_data.get('related_patterns', [])
+            for related in related_patterns:
+                if related in self.patterns:  # Only add links to existing patterns
+                    graph_data['links'].append({'source': pattern_name, 'target': related, 'value': 1})
+
+        try:
+            # Generate the relationships page
+            relationships_content = template.render(graph_data=graph_data)
+            relationships_file = self.output_dir / 'patterns' / 'relationships.html'  # Updated path
+            relationships_file.write_text(relationships_content)
+            print(f"Generated relationships visualization at {relationships_file}")
+        except Exception as e:
+            print(f"Error generating relationships page: {str(e)}")
