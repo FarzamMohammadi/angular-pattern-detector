@@ -42,8 +42,7 @@ class ComponentExtractor:
             'form-group': r'<form[^>]*>.*?</form>',
             'input-field': r'<input[^>]*>',
             'action-button': r'<button[^>]*>.*?</button>',
-            'data-binding': r'\{\{[^}]+\}\}',
-            'event-binding': r'\([^)]+\)="[^"]+"',
+            'data-binding': r'\{\{[^}]+\}\}'
         }
         # Precompile regular expressions
         self.compiled_patterns = {
